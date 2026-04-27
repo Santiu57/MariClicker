@@ -3,6 +3,8 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 20px;
+    background-image: url("src/imgs/background.png");
+    background-size: cover;
 }
 
 header {
@@ -15,11 +17,12 @@ header {
     display: flex;
     width: 100%;
     min-height: 100vh;
+    background-color: #fcdaa4ad;
 }
 
 /* IZQUIERDA - UID 20% */
 #UID {
-    width: 10%;
+    width: 20%;
     display: flex;
     justify-content: center;
     align-items: flex-start;
@@ -29,14 +32,14 @@ header {
 
 /* CENTRO - MARI 50% */
 #mari-section {
-    width: 60%;
+    width: 40%;
     display: flex;
     justify-content: center;
     border: 2px solid #F8BF94;
     align-items: top;
 }
 
-/* DERECHA - MEJORAS 30% */
+/* DERECHA - MEJORAS */
 #upgrades {
     width: 40%;
     display: flex;
@@ -57,19 +60,21 @@ header {
 .upgrade-card {
     position: relative;
     height: 80px;
-    background: #c9c9c9;
-    border: 2px solid #888;
+    background: #ABE7EE;
+    border: 2px solid #77aeb5;
     cursor: pointer;
     overflow: hidden;
     transition: 0.15s;
     user-select: none;
     -webkit-user-drag: none;
     -webkit-user-select: none;
+    background-image: url("src/imgs/upgrade-bg.png");
+    background-size: 100% 200%;
 }
 
 .upgrade-card:hover {
     transform: scale(1.02);
-    background: #d8d8d8;
+    background: #b6f8ff7a;
 }
 
 .upgrade-icon {
@@ -104,8 +109,21 @@ header {
     font-weight: bold;
 }
 
+.RanMari {
+    transition: transform 0.2s ease;
+    width: 100px;
+    height: auto;
+    display: block;
+    position: absolute;
+}
+
 img {
     user-select: none;
     -webkit-user-drag: none;
     -webkit-user-select: none;
+}
+
+h2 {
+    margin: 0;
+    padding: 0;
 }

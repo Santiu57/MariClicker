@@ -4,6 +4,11 @@
 const clicker = document.getElementById("mari-image");
 const MariDisplay = document.getElementById("maris-counter");
 
+//Mari Imgs
+const Maris = [
+    "Mari-0.png",
+];
+
 // ============================
 // CLASE BASE DE MEJORA
 // ============================
@@ -60,7 +65,7 @@ class AddUpgrade extends Upgrade {
 class MultiplyUpgrade extends Upgrade {
     apply(game) {
         if (this.owned > 0) {
-            game.multiplier *= Math.pow(this.value, this.owned);
+            game.baseClick *= this.value * this.owned;
         }
     }
 }
@@ -86,15 +91,17 @@ class CritUpgrade extends Upgrade {
 class Game {
     constructor() {
         this.maris = 0;
+        this.clicks = 0;
 
         this.upgrades = {
-            mari: new AddUpgrade("Mari", 10, 1, "images/Mari-icon.png"),
-            piety: new AddUpgrade("Piety", 50, 5, "images/Piety.png"),
-            corsage: new MultiplyUpgrade("Corsage", 100, 2, "images/Corsage.png"),
+            mari: new AddUpgrade("Mari", 10, 1, "src/imgs/Mari-icon.png"),
+            piety: new AddUpgrade("Piety", 50, 5, "src/imgs/Piety.png", 1.7),
+            corsage: new MultiplyUpgrade("Innocent Corsage", 100, 1, "src/imgs/Corsage.png", 2.7),
         };
     }
 
     click() {
+        this.clicks++;
         let clickData = {
             baseClick: 1,
             multiplier: 1
@@ -106,7 +113,13 @@ class Game {
 
         let earned = clickData.baseClick * clickData.multiplier;
 
-        if (earned <= 0) earned = 1;
+        if (this.clicks % 10 === 0) {
+            this.AudioPlay("Mari", 0.3);
+            this.MariShow();
+        }
+        if (this.clicks === 1) {
+            game.AudioPlay("Dolce_Bilblioteca", 0.3, true);
+        }
 
         this.maris += Math.floor(earned);
 
@@ -143,7 +156,7 @@ class Game {
 
             <div class="upgrade-name">${up.name}</div>
 
-            <div class="upgrade-cost">💰 ${up.cost}</div>
+            <div class="upgrade-cost">${up.cost}$</div>
 
             <div class="upgrade-owned">x${up.owned}</div>
         `;
@@ -160,6 +173,32 @@ class Game {
 
             shop.appendChild(card);
         }
+    }
+
+    AudioPlay(audio, volume = 0.5, loop = false) {
+        let audioElement = document.createElement("audio");
+        audioElement.src = `src/aud/${audio}.ogg`;
+        audioElement.volume = volume;
+        audioElement.loop = loop;
+        audioElement.play();
+    }
+
+    MariShow() {
+        let img = document.createElement("img");
+        img.src = `src/imgs/Mari/${Maris[Math.random() * Maris.length | 0]}`;
+        img.className = "RanMari";
+        img.style.left = Math.random() * (window.innerWidth - 100) + "px";
+        img.style.top = Math.random() * (window.innerHeight - 100) + "px";
+        document.body.appendChild(img);
+
+        setTimeout(() => {
+            img.style.transition = "opacity 0.5s ease";
+            img.style.opacity = "0";
+        }, 1000);
+        setTimeout(() => {
+            img.remove();
+        }, 1500);
+
     }
 }
 
