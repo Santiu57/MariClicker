@@ -1,0 +1,111 @@
+body {
+    background-color: #FCDAA4;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+/* CONTENEDOR GENERAL */
+#layout {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+}
+
+/* IZQUIERDA - UID 20% */
+#UID {
+    width: 10%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    border: 2px solid #F8BF94;
+    padding: 20px;
+}
+
+/* CENTRO - MARI 50% */
+#mari-section {
+    width: 60%;
+    display: flex;
+    justify-content: center;
+    border: 2px solid #F8BF94;
+    align-items: top;
+}
+
+/* DERECHA - MEJORAS 30% */
+#upgrades {
+    width: 40%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+    border: 2px solid #F8BF94;
+}
+
+/* IMAGEN */
+#mari-image {
+    width: auto;
+    height: 800px;
+    transition: transform 0.2s ease;
+}
+
+/* Mejoras */
+.upgrade-card {
+    position: relative;
+    height: 80px;
+    background: #c9c9c9;
+    border: 2px solid #888;
+    cursor: pointer;
+    overflow: hidden;
+    transition: 0.15s;
+    user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+}
+
+.upgrade-card:hover {
+    transform: scale(1.02);
+    background: #d8d8d8;
+}
+
+.upgrade-icon {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.upgrade-name {
+    position: absolute;
+    left: 95px;
+    top: 10px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.upgrade-cost {
+    position: absolute;
+    right: 10px;
+    top: 8px;
+    font-size: 16px;
+}
+
+.upgrade-owned {
+    position: absolute;
+    right: 10px;
+    bottom: 8px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+img {
+    user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+}
