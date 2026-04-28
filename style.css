@@ -5,6 +5,8 @@ body {
     padding: 20px;
     background-image: url("src/imgs/background.png");
     background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 header {
@@ -68,8 +70,10 @@ header {
     user-select: none;
     -webkit-user-drag: none;
     -webkit-user-select: none;
-    background-image: url("src/imgs/upgrade-bg.png");
     background-size: 100% 200%;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 .upgrade-card:hover {

@@ -13,13 +13,14 @@ const Maris = [
 // CLASE BASE DE MEJORA
 // ============================
 class Upgrade {
-    constructor(name, cost, value, image, growth = 1.5) {
+    constructor(name, cost, value, image, bg, growth = 1.5) {
         this.name = name;
         this.cost = cost;
         this.value = value;
         this.growth = growth;
         this.image = image;
         this.owned = 0;
+        this.bg = bg
     }
 
     canBuy(game) {
@@ -44,9 +45,39 @@ class Upgrade {
     apply(game) {
         // opcional override
     }
+}
 
-    getLabel() {
-        return `${this.name} (Cost: ${this.cost}, Owned: ${this.owned})`;
+class building {
+    constructor(name, cost, value, image, bg, growth = 1.2) {
+        this.name = name;
+        this.cost = cost;
+        this.value = value;
+        this.growth = growth;
+        this.image = image;
+        this.owned = 0;
+        this.bg = bg
+    }
+    canBuy(game) {
+        return game.maris >= this.cost;
+    }
+
+    buy(game) {
+        if (!this.canBuy(game)) return false;
+
+        game.maris -= this.cost;
+        this.owned++;
+        this.onBuy(game);
+
+        this.cost = Math.floor(this.cost * this.growth);
+        return true;
+    }
+
+    onBuy(game) {
+        // opcional override
+    }
+
+    apply(game) {
+        // opcional override
     }
 }
 
@@ -65,7 +96,7 @@ class AddUpgrade extends Upgrade {
 class MultiplyUpgrade extends Upgrade {
     apply(game) {
         if (this.owned > 0) {
-            game.baseClick *= this.value * this.owned;
+            game.baseClick *= Math.pow(this.value, this.owned);
         }
     }
 }
@@ -92,12 +123,27 @@ class Game {
     constructor() {
         this.maris = 0;
         this.clicks = 0;
+        this.mariClick = 0;
 
         this.upgrades = {
-            mari: new AddUpgrade("Mari", 10, 1, "src/imgs/Mari-icon.png"),
-            piety: new AddUpgrade("Piety", 50, 5, "src/imgs/Piety.png", 1.7),
-            corsage: new MultiplyUpgrade("Innocent Corsage", 100, 1, "src/imgs/Corsage.png", 2.7),
+            mari: new AddUpgrade("Mari", 10, 1, "src/imgs/Mari-icon.png", "src/imgs/background.png"),
+            piety: new AddUpgrade("Piety", 80, 3, "src/imgs/Piety.png", "src/imgs/background.png", 1.55),
+            corsage: new MultiplyUpgrade("Innocent Corsage", 500, 1.5, "src/imgs/Corsage.png", "src/imgs/background.png", 2.2),
         };
+        this.buildings = {
+
+        }
+    }
+
+    generator() {
+        let genData = {
+            mariperSecond: 0,
+            mult: 1
+        }
+
+        for (let key in this.buildings) {
+            this.buildings[key].apply()
+        }
     }
 
     click() {
@@ -112,6 +158,7 @@ class Game {
         }
 
         let earned = clickData.baseClick * clickData.multiplier;
+        this.mariClick = earned;
 
         if (this.clicks % 10 === 0) {
             this.AudioPlay("Mari", 0.3);
@@ -138,7 +185,9 @@ class Game {
 
     updateDisplay() {
         this.renderShop();
-        MariDisplay.innerHTML = `Maris: ${this.maris}`;
+        MariDisplay.innerHTML =
+            `Mari's: ${this.maris} <br>
+        Mari's/click: ${this.mariClick} <br>`;
     }
 
     renderShop() {
@@ -150,6 +199,7 @@ class Game {
 
             const card = document.createElement("div");
             card.className = "upgrade-card";
+            card.style.backgroundImage = `url(${up.bg})`;;
 
             card.innerHTML = `
             <img src="${up.image}" class="upgrade-icon">
@@ -194,12 +244,13 @@ class Game {
         setTimeout(() => {
             img.style.transition = "opacity 0.5s ease";
             img.style.opacity = "0";
-        }, 1000);
+        }, 750);
         setTimeout(() => {
             img.remove();
-        }, 1500);
-
+        }, 1250);
     }
+
+
 }
 
 // ============================
