@@ -10,15 +10,7 @@ const shop = document.getElementById("shop");
 const ownedBox = document.getElementById("owned-upgrades");
 
 //Mari Imgs
-const Maris = [
-    "Mari-0.png",
-    "Mari-1.png",
-    "Mari-2.png",
-    "Mari-3.png",
-    "Mari-4.png",
-    "Mari-5.png",
-    "Mari-6.png",
-];
+const Maris = 6;
 
 class ShopItem {
     constructor({
@@ -82,7 +74,7 @@ class Student extends ShopItem { }
 class Building extends ShopItem { }
 class Upgrade extends ShopItem { }
 
-class GenMult extends Building {
+class GenMult extends Upgrade {
     apply(data) {
         data.mult *= Math.pow(this.value, this.owned);
     }
@@ -102,7 +94,7 @@ class GenPlus extends Building {
     }
 }
 
-class ClickPlus extends Upgrade {
+class ClickPlus extends Student {
     apply(data) {
         data.base += this.value * this.owned;
     }
@@ -122,13 +114,25 @@ class ClickMult extends Upgrade {
     }
 }
 
+class Interval extends Upgrade {
+    onBuy(game) {
+        game.loopTime = Math.max(50, game.loopTime * this.value);
+        game.loop();
+    }
+
+    getEffectText() {
+        return `x${1 / this.value} velocidad pasiva`;
+    }
+}
+
 // ============================
 // JUEGO
 // ============================
 class Game {
     constructor() {
-        this.maris = 0;
+        this.maris = 2000;
         this.clicks = 0;
+        this.loopTime = 1000;
 
         this.mariClick = 1;
         this.mariPerSecond = 0;
@@ -146,6 +150,8 @@ class Game {
         this.initData();
         this.renderShop();
         this.update();
+
+        this.loopId = null;
         this.loop();
 
         this.fastInterval = null;
@@ -162,24 +168,24 @@ class Game {
             name: "Mari",
             cost: 10,
             value: 1,
-            image: "src/imgs/Mari-icon.png",
-            bg: "src/imgs/trinity.png"
+            image: "src/imgs/icons/Mari-icon.png",
+            bg: "src/imgs/bgs/trinity.png"
         });
 
         this.buildings.library = new GenPlus({
             name: "Library",
             cost: 50,
             value: 1,
-            image: "src/imgs/Mari-icon.png",
-            bg: "src/imgs/trinity.png"
+            image: "src/imgs/icons/Mari-icon.png",
+            bg: "src/imgs/bgs/trinity.png"
         });
 
         this.buildings.plaza = new GenMult({
             name: "Trinity Plaza",
             cost: 300,
             value: 2,
-            image: "src/imgs/Mari-icon.png",
-            bg: "src/imgs/trinity.png",
+            image: "src/imgs/icons/Mari-icon.png",
+            bg: "src/imgs/bgs/trinity.png",
             requirement: g => g.buildings.library.owned >= 1,
             requirementText: "Requires Library"
         });
@@ -188,16 +194,24 @@ class Game {
             name: "Piety",
             cost: 100,
             value: 3,
-            image: "src/imgs/Piety.png",
-            bg: "src/imgs/trinity.png"
+            image: "src/imgs/objs/Piety.png",
+            bg: "src/imgs/bgs/trinity.png"
         });
 
         this.upgrades.corsage = new ClickMult({
             name: "Corsage",
             cost: 500,
             value: 1.5,
-            image: "src/imgs/Corsage.png",
-            bg: "src/imgs/trinity.png"
+            image: "src/imgs/objs/Corsage.png",
+            bg: "src/imgs/bgs/trinity.png"
+        });
+
+        this.upgrades.tracksuit = new Interval({
+            name: "Interval",
+            cost: 2000,
+            value: 0.5,
+            image: "src/imgs/Mari/Tracksuit.png",
+            bg: "src/imgs/bgs/trinity.png"
         });
     }
 
@@ -317,11 +331,11 @@ class Game {
                     if (item.purchased) return;
 
                     if (item.buy(this)) {
-                        this.calcClick();
-                        this.calcGen();
                         item.purchased = true;
                         this.activeUpgrades.push(item);
                         delete source[key];
+                        this.calcClick();
+                        this.calcGen();
 
                         this.renderOwned();
                         this.renderShop();
@@ -364,12 +378,16 @@ class Game {
         card.className = "upgrade-card";
         card.style.backgroundImage = `url(${item.bg})`;
 
+        const hasIcon = !(item instanceof Building);
+
+        if (!hasIcon) card.classList.add("no-icon");
+
         card.innerHTML = `
-    <img src="${item.image}" class="upgrade-icon">
-    <div class="upgrade-name">${item.name}</div>
-    <div class="upgrade-cost">${item.cost}$</div>
-    <div class="upgrade-owned">x${item.owned}</div>
-    `;
+        ${hasIcon ? `<img src="${item.image}" class="upgrade-icon">` : ""}
+        <div class="upgrade-name">${item.name}</div>
+        <div class="upgrade-cost">${item.cost}$</div>
+        <div class="upgrade-owned">x${item.owned}</div>
+        `;
         // BUY FUNCTION
         card.addEventListener("mousedown", (e) => {
             e.preventDefault();
@@ -396,6 +414,7 @@ class Game {
 
         card.addEventListener("mouseleave", () => {
             this.stopFastPurchase();
+            card.style.transform = "scale(1)";
         });
 
         card.addEventListener("mouseenter", () => {
@@ -434,19 +453,25 @@ class Game {
     }
 
     tooltip(card, item) {
-        card.onmouseenter = () => {
+        card.addEventListener("mouseenter", () => {
             tooltip.textContent = item.getEffectText();
             tooltip.style.opacity = 1;
-        };
+        });
 
-        card.onmouseleave = () => {
+        card.addEventListener("mouseleave", () => {
             tooltip.style.opacity = 0;
-        };
+        });
 
-        card.onmousemove = e => {
+        card.addEventListener("mousemove", (e) => {
             tooltip.style.left = e.clientX + 15 + "px";
             tooltip.style.top = e.clientY + 15 + "px";
-        };
+        });
+
+        if (item instanceof Upgrade) {
+            card.addEventListener("click", () => {
+                tooltip.style.opacity = 0;
+            });
+        }
     }
 
     checkRequirement() {
@@ -479,7 +504,7 @@ class Game {
         let img;
 
         // Reusar imagen existente si hay pool
-        if (this.mariPool.length < 10) {
+        if (this.mariPool.length < 100) {
             img = document.createElement("img");
             img.className = "RanMari";
 
@@ -499,7 +524,7 @@ class Game {
         img.style.transition = "none";
         img.style.opacity = "1";
 
-        img.src = `src/imgs/Mari/${Maris[(Math.random() * Maris.length) | 0]}`;
+        img.src = `src/imgs/Chibi/Mari-${(Math.random() * Maris) | 0}.png`;
 
         // 50% probabilidad de espejear horizontalmente
         img.style.transform = Math.random() < 0.5
@@ -534,7 +559,11 @@ class Game {
     // LOOP
     // ========================================
     loop() {
-        setInterval(() => this.tick(), 1000);
+        clearInterval(this.loopId);
+
+        this.loopId = setInterval(() => {
+            this.tick();
+        }, this.loopTime);
     }
 
     // ========================================
@@ -564,7 +593,7 @@ class Game {
 const game = new Game();
 const Bgs = 2
 
-document.body.style.backgroundImage = `url('src/imgs/bg${Math.floor(Math.random() * Bgs) + 1}.png')`;
+document.body.style.backgroundImage = `url('src/imgs/bgs/bg${Math.floor(Math.random() * Bgs) + 1}.png')`;
 
 // ============================
 // EVENTOS Y ANIMACIONES
@@ -585,5 +614,3 @@ clicker.addEventListener("mousedown", () => {
 clicker.addEventListener("mouseup", () => {
     clicker.style.transform = "scale(1)";
 });
-
-window.addEventListener("mouseup", () => this.stopFastPurchase());

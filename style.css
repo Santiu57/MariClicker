@@ -79,6 +79,17 @@ header {
     transform: translateZ(0);
     border-radius: 10px;
     cursor: pointer;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+}
+
+.upgrade-card.no-icon .upgrade-name {
+    left: 15px;
+}
+
+.upgrade-card.no-icon .upgrade-cost,
+.upgrade-card.no-icon .upgrade-owned {
+    right: 10px;
 }
 
 .upgrade-icon {
