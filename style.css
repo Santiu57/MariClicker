@@ -3,7 +3,6 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 20px;
-    background-image: url("src/imgs/background.png");
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
@@ -74,11 +73,12 @@ header {
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
-}
-
-.upgrade-card:hover {
-    transform: scale(1.02);
-    background: #b6f8ff7a;
+    transform-origin: center;
+    will-change: transform;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    border-radius: 10px;
+    cursor: pointer;
 }
 
 .upgrade-icon {
@@ -130,4 +130,86 @@ img {
 h2 {
     margin: 0;
     padding: 0;
+}
+
+#tooltip {
+    position: fixed;
+    pointer-events: none;
+    background: rgba(20, 20, 20, 0.95);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    white-space: nowrap;
+}
+
+.locked-card {
+    position: relative;
+    height: 80px;
+    border: 2px solid #9a8e80;
+    background: linear-gradient(135deg, #d9d0c7, #b9aea4);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-left: 18px;
+    box-sizing: border-box;
+    color: #4e4338;
+    user-select: none;
+    opacity: 0.85;
+    overflow: hidden;
+}
+
+.locked-card::before {
+    content: "🔒";
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 26px;
+    opacity: 0.65;
+}
+
+.locked-card div {
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.locked-card small {
+    margin-top: 4px;
+    font-size: 13px;
+    color: #5f544a;
+}
+
+#owned-upgrades {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px;
+    min-height: 80px;
+    background: rgba(255, 255, 255, 0.28);
+    border: 2px solid #F8BF94;
+    border-radius: 10px;
+    align-content: flex-start;
+    box-sizing: border-box;
+}
+
+#owned-upgrades img {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 2px solid #d69e74;
+    background: rgba(255, 255, 255, 0.45);
+    padding: 2px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+#owned-upgrades img:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }

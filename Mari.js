@@ -1,26 +1,49 @@
-// ============================
+
+//IMPORTS
+import { suffixes } from "./suffixes.js";
+
 // ELEMENTOS DEL DOM
-// ============================
 const clicker = document.getElementById("mari-image");
 const MariDisplay = document.getElementById("maris-counter");
+const tooltip = document.getElementById("tooltip");
+const shop = document.getElementById("shop");
+const ownedBox = document.getElementById("owned-upgrades");
 
 //Mari Imgs
 const Maris = [
     "Mari-0.png",
+    "Mari-1.png",
+    "Mari-2.png",
+    "Mari-3.png",
+    "Mari-4.png",
+    "Mari-5.png",
+    "Mari-6.png",
 ];
 
-// ============================
-// CLASE BASE DE MEJORA
-// ============================
-class Upgrade {
-    constructor(name, cost, value, image, bg, growth = 1.5) {
-        this.name = name;
-        this.cost = cost;
-        this.value = value;
-        this.growth = growth;
-        this.image = image;
+class ShopItem {
+    constructor({
+        name,
+        cost,
+        value,
+        image,
+        bg,
+        growth = 1.15,
+        requirement = () => true,
+        requirementText = ""
+    }) {
+        Object.assign(this, {
+            name,
+            cost,
+            value,
+            image,
+            bg,
+            growth,
+            requirement,
+            requirementText
+        });
+
         this.owned = 0;
-        this.bg = bg
+        this.purchased = false;
     }
 
     canBuy(game) {
@@ -32,87 +55,70 @@ class Upgrade {
 
         game.maris -= this.cost;
         this.owned++;
+
         this.onBuy(game);
 
-        this.cost = Math.floor(this.cost * this.growth);
+        this.cost = Math.ceil(this.cost * this.growth);
+
+        game.checkRequirement();
+
         return true;
     }
 
-    onBuy(game) {
-        // opcional override
+    onBuy() { }
+
+    apply() { }
+
+    visible(game) {
+        return this.requirement(game);
     }
 
-    apply(game) {
-        // opcional override
-    }
-}
-
-class building {
-    constructor(name, cost, value, image, bg, growth = 1.2) {
-        this.name = name;
-        this.cost = cost;
-        this.value = value;
-        this.growth = growth;
-        this.image = image;
-        this.owned = 0;
-        this.bg = bg
-    }
-    canBuy(game) {
-        return game.maris >= this.cost;
-    }
-
-    buy(game) {
-        if (!this.canBuy(game)) return false;
-
-        game.maris -= this.cost;
-        this.owned++;
-        this.onBuy(game);
-
-        this.cost = Math.floor(this.cost * this.growth);
-        return true;
-    }
-
-    onBuy(game) {
-        // opcional override
-    }
-
-    apply(game) {
-        // opcional override
+    getEffectText() {
+        return "";
     }
 }
 
-// ============================
-// SUMA AL CLICK
-// ============================
-class AddUpgrade extends Upgrade {
-    apply(game) {
-        game.baseClick += this.value * this.owned;
+class Student extends ShopItem { }
+class Building extends ShopItem { }
+class Upgrade extends ShopItem { }
+
+class GenMult extends Building {
+    apply(data) {
+        data.mult *= Math.pow(this.value, this.owned);
+    }
+
+    getEffectText() {
+        return `x${this.value} Mari pasivamente`;
     }
 }
 
-// ============================
-// MULTIPLICADOR
-// ============================
-class MultiplyUpgrade extends Upgrade {
-    apply(game) {
-        if (this.owned > 0) {
-            game.baseClick *= Math.pow(this.value, this.owned);
-        }
+class GenPlus extends Building {
+    apply(data) {
+        data.base += this.value * this.owned;
+    }
+
+    getEffectText() {
+        return `+${this.value} Mari pasivamente`;
     }
 }
 
-// ============================
-// BONUS CRÍTICO
-// ============================
-class CritUpgrade extends Upgrade {
-    apply(game) {
-        if (this.owned > 0) {
-            const chance = 0.10 * this.owned;
+class ClickPlus extends Upgrade {
+    apply(data) {
+        data.base += this.value * this.owned;
+    }
 
-            if (Math.random() < chance) {
-                game.baseClick *= 5;
-            }
-        }
+    getEffectText() {
+        return `+${this.value} Mari por click`;
+    }
+}
+
+class ClickMult extends Upgrade {
+    apply(data) {
+        data.mult *= Math.pow(this.value, this.owned);
+    }
+
+    getEffectText() {
+        return `x${this.value} Mari por click`;
     }
 }
 
@@ -123,106 +129,397 @@ class Game {
     constructor() {
         this.maris = 0;
         this.clicks = 0;
-        this.mariClick = 0;
 
-        this.upgrades = {
-            mari: new AddUpgrade("Mari", 10, 1, "src/imgs/Mari-icon.png", "src/imgs/background.png"),
-            piety: new AddUpgrade("Piety", 80, 3, "src/imgs/Piety.png", "src/imgs/background.png", 1.55),
-            corsage: new MultiplyUpgrade("Innocent Corsage", 500, 1.5, "src/imgs/Corsage.png", "src/imgs/background.png", 2.2),
-        };
-        this.buildings = {
+        this.mariClick = 1;
+        this.mariPerSecond = 0;
 
-        }
+        this.activeUpgrades = [];
+
+        this.students = {};
+        this.buildings = {};
+        this.upgrades = {};
+
+        this.shopCards = {};
+        this.studentsCards = {};
+        this.buildingCards = {};
+
+        this.initData();
+        this.renderShop();
+        this.update();
+        this.loop();
+
+        this.fastInterval = null;
+        this.fastTimeout = null;
+        this.fastCard = null;
     }
 
-    generator() {
-        let genData = {
-            mariperSecond: 0,
-            mult: 1
-        }
+    // ========================================
+    // DATA
+    // ========================================
+    initData() {
 
-        for (let key in this.buildings) {
-            this.buildings[key].apply()
-        }
+        this.students.mari = new ClickPlus({
+            name: "Mari",
+            cost: 10,
+            value: 1,
+            image: "src/imgs/Mari-icon.png",
+            bg: "src/imgs/trinity.png"
+        });
+
+        this.buildings.library = new GenPlus({
+            name: "Library",
+            cost: 50,
+            value: 1,
+            image: "src/imgs/Mari-icon.png",
+            bg: "src/imgs/trinity.png"
+        });
+
+        this.buildings.plaza = new GenMult({
+            name: "Trinity Plaza",
+            cost: 300,
+            value: 2,
+            image: "src/imgs/Mari-icon.png",
+            bg: "src/imgs/trinity.png",
+            requirement: g => g.buildings.library.owned >= 1,
+            requirementText: "Requires Library"
+        });
+
+        this.upgrades.piety = new ClickPlus({
+            name: "Piety",
+            cost: 100,
+            value: 3,
+            image: "src/imgs/Piety.png",
+            bg: "src/imgs/trinity.png"
+        });
+
+        this.upgrades.corsage = new ClickMult({
+            name: "Corsage",
+            cost: 500,
+            value: 1.5,
+            image: "src/imgs/Corsage.png",
+            bg: "src/imgs/trinity.png"
+        });
+    }
+
+    // ========================================
+    // ECONOMÍA
+    // ========================================
+    calcClick() {
+        let data = { base: 1, mult: 1 };
+
+        for (const key in this.students)
+            this.students[key].apply(data);
+
+        for (const up of this.activeUpgrades)
+            up.apply(data);
+
+        this.mariClick = Math.floor(data.base * data.mult);
+    }
+
+    calcGen() {
+        let data = { base: 0, mult: 1 };
+
+        for (const key in this.buildings)
+            this.buildings[key].apply(data);
+
+        this.mariPerSecond = Math.floor(data.base * data.mult);
     }
 
     click() {
         this.clicks++;
-        let clickData = {
-            baseClick: 1,
-            multiplier: 1
-        };
 
-        for (let key in this.upgrades) {
-            this.upgrades[key].apply(clickData);
-        }
+        this.calcClick();
 
-        let earned = clickData.baseClick * clickData.multiplier;
-        this.mariClick = earned;
+        this.maris += this.mariClick;
+
+        this.update();
+
+        this.checkRequirement();
 
         if (this.clicks % 10 === 0) {
             this.AudioPlay("Mari", 0.3);
-            this.MariShow();
+            this.spawnMari();
         }
-        if (this.clicks === 1) {
-            game.AudioPlay("Dolce_Bilblioteca", 0.3, true);
-        }
-
-        this.maris += Math.floor(earned);
-
-        this.updateDisplay();
-    }
-
-    buyUpgrade(id) {
-        const upgrade = this.upgrades[id];
-
-        if (!upgrade) return;
-
-        if (upgrade.buy(this)) {
-            this.updateDisplay();
+        if (this.clicks == 1) {
+            this.AudioPlay("Dolce_Bilblioteca", 0.5, true);
         }
     }
 
-    updateDisplay() {
-        this.renderShop();
-        MariDisplay.innerHTML =
-            `Mari's: ${this.maris} <br>
-        Mari's/click: ${this.mariClick} <br>`;
+    tick() {
+        this.calcGen();
+
+        this.maris += this.mariPerSecond;
+
+        this.checkRequirement();
+
+        this.update();
+    }
+
+    // ========================================
+    // UI
+    // ========================================
+    update() {
+        MariDisplay.innerHTML = `
+        Mari's: ${this.format(this.maris)}<br>
+        Mari/click: ${this.format(this.mariClick)}<br>
+        Mari/sec: ${this.format(this.mariPerSecond)}
+        `;
+
+        this.updateShop();
+    }
+
+    updateShop() {
+        const all = [
+            this.shopCards,
+            this.studentsCards,
+            this.buildingCards
+        ];
+
+        for (const storage of all) {
+            for (const key in storage) {
+                const card = storage[key];
+                const item = card.item;
+
+                card.querySelector(".upgrade-cost").textContent =
+                    this.format(item.cost) + "$";
+
+                card.querySelector(".upgrade-owned").textContent =
+                    "x" + item.owned;
+            }
+        }
     }
 
     renderShop() {
-        const shop = document.getElementById("shop");
+        this.stopFastPurchase();
         shop.innerHTML = "";
 
-        for (let key in this.upgrades) {
-            const up = this.upgrades[key];
+        this.renderCategory("Students", this.students, this.studentsCards);
+        this.renderCategory("Buildings", this.buildings, this.buildingCards);
+        this.renderCategory("Upgrades", this.upgrades, this.shopCards, true);
+    }
 
-            const card = document.createElement("div");
-            card.className = "upgrade-card";
-            card.style.backgroundImage = `url(${up.bg})`;;
+    renderCategory(title, source, storage, single = false) {
+        const h = document.createElement("h2");
+        h.textContent = title;
+        shop.appendChild(h);
 
-            card.innerHTML = `
-            <img src="${up.image}" class="upgrade-icon">
+        for (const key in source) {
+            const item = source[key];
 
-            <div class="upgrade-name">${up.name}</div>
+            if (!item.visible(this)) {
+                shop.appendChild(this.lockedCard(item));
+                continue;
+            }
 
-            <div class="upgrade-cost">${up.cost}$</div>
+            const card = this.createCard(item, () => {
 
-            <div class="upgrade-owned">x${up.owned}</div>
-        `;
+                if (single) {
+                    if (item.purchased) return;
 
-            card.addEventListener("click", () => {
-                up.buy(this);
-                this.updateDisplay();
-                card.style.transform = "scale(0.95)";
+                    if (item.buy(this)) {
+                        this.calcClick();
+                        this.calcGen();
+                        item.purchased = true;
+                        this.activeUpgrades.push(item);
+                        delete source[key];
 
-                setTimeout(() => {
-                    card.style.transform = "scale(1)";
-                }, 100);
+                        this.renderOwned();
+                        this.renderShop();
+                        this.update();
+                    }
+
+                    return;
+                }
+
+                if (item.buy(this)) {
+                    this.calcClick();
+                    this.calcGen();
+                    this.update();
+                }
             });
+
+            card.item = item;
+            storage[key] = card;
 
             shop.appendChild(card);
         }
+    }
+
+    stopFastPurchase() {
+        clearInterval(this.fastInterval);
+        clearTimeout(this.fastTimeout);
+
+        this.fastInterval = null;
+        this.fastTimeout = null;
+
+        if (this.fastCard)
+            this.fastCard.style.transform = "scale(1)";
+
+        this.fastCard = null;
+    }
+
+    createCard(item, buyFn) {
+        const card = document.createElement("div");
+
+        card.className = "upgrade-card";
+        card.style.backgroundImage = `url(${item.bg})`;
+
+        card.innerHTML = `
+    <img src="${item.image}" class="upgrade-icon">
+    <div class="upgrade-name">${item.name}</div>
+    <div class="upgrade-cost">${item.cost}$</div>
+    <div class="upgrade-owned">x${item.owned}</div>
+    `;
+        // BUY FUNCTION
+        card.addEventListener("mousedown", (e) => {
+            e.preventDefault();
+
+            this.stopFastPurchase();
+
+            this.fastCard = card;
+
+            card.style.transform = "scale(0.98)";
+
+            buyFn();
+
+            this.fastTimeout = setTimeout(() => {
+                this.fastInterval = setInterval(() => {
+                    buyFn();
+                }, 60);
+            }, 220);
+        });
+
+        card.addEventListener("mouseup", () => {
+            this.stopFastPurchase();
+            card.style.transform = "scale(1.02)";
+        });
+
+        card.addEventListener("mouseleave", () => {
+            this.stopFastPurchase();
+        });
+
+        card.addEventListener("mouseenter", () => {
+            card.style.transform = "scale(1.02)";
+        });
+
+        // Tooltip
+        this.tooltip(card, item);
+
+        return card;
+    }
+
+    lockedCard(item) {
+        const div = document.createElement("div");
+        div.className = "locked-card";
+
+        div.innerHTML = `
+        <div>???</div>
+        <small>${item.requirementText}</small>
+        `;
+
+        return div;
+    }
+
+    renderOwned() {
+        ownedBox.innerHTML = "";
+
+        for (const up of this.activeUpgrades) {
+            const img = document.createElement("img");
+            img.src = up.image;
+            img.title = up.name;
+            this.tooltip(img, up);
+
+            ownedBox.appendChild(img);
+        }
+    }
+
+    tooltip(card, item) {
+        card.onmouseenter = () => {
+            tooltip.textContent = item.getEffectText();
+            tooltip.style.opacity = 1;
+        };
+
+        card.onmouseleave = () => {
+            tooltip.style.opacity = 0;
+        };
+
+        card.onmousemove = e => {
+            tooltip.style.left = e.clientX + 15 + "px";
+            tooltip.style.top = e.clientY + 15 + "px";
+        };
+    }
+
+    checkRequirement() {
+        const sources = [
+            this.students,
+            this.buildings,
+            this.upgrades
+        ];
+
+        for (const group of sources) {
+            for (const key in group) {
+                const item = group[key];
+
+                if (item.visible(this) && !item.unlocked) {
+                    item.unlocked = true;
+                    this.renderShop();
+                    this.update();
+                    return;
+                }
+            }
+        }
+    }
+    // ========================================
+    // FX
+    // ========================================
+    spawnMari() {
+        if (!this.mariPool) this.mariPool = [];
+        if (this.mariIndex === undefined) this.mariIndex = 0;
+
+        let img;
+
+        // Reusar imagen existente si hay pool
+        if (this.mariPool.length < 10) {
+            img = document.createElement("img");
+            img.className = "RanMari";
+
+            img.style.position = "fixed";
+            img.style.pointerEvents = "none";
+            img.style.willChange = "transform, opacity";
+            img.style.transition = "opacity 0.5s ease";
+
+            document.body.appendChild(img);
+            this.mariPool.push(img);
+        }
+
+        img = this.mariPool[this.mariIndex];
+        this.mariIndex = (this.mariIndex + 1) % this.mariPool.length;
+
+        // Reset rápido
+        img.style.transition = "none";
+        img.style.opacity = "1";
+
+        img.src = `src/imgs/Mari/${Maris[(Math.random() * Maris.length) | 0]}`;
+
+        // 50% probabilidad de espejear horizontalmente
+        img.style.transform = Math.random() < 0.5
+            ? "scaleX(-1)"
+            : "scaleX(1)";
+
+        const x = Math.random() * (window.innerWidth - 100);
+        const y = Math.random() * (window.innerHeight - 100);
+
+        img.style.left = x + "px";
+        img.style.top = y + "px";
+
+        // Forzar repaint limpio
+        img.offsetHeight;
+
+        img.style.transition = "opacity 0.5s ease";
+
+        setTimeout(() => {
+            img.style.opacity = "0";
+        }, 750);
     }
 
     AudioPlay(audio, volume = 0.5, loop = false) {
@@ -233,39 +530,46 @@ class Game {
         audioElement.play();
     }
 
-    MariShow() {
-        let img = document.createElement("img");
-        img.src = `src/imgs/Mari/${Maris[Math.random() * Maris.length | 0]}`;
-        img.className = "RanMari";
-        img.style.left = Math.random() * (window.innerWidth - 100) + "px";
-        img.style.top = Math.random() * (window.innerHeight - 100) + "px";
-        document.body.appendChild(img);
-
-        setTimeout(() => {
-            img.style.transition = "opacity 0.5s ease";
-            img.style.opacity = "0";
-        }, 750);
-        setTimeout(() => {
-            img.remove();
-        }, 1250);
+    // ========================================
+    // LOOP
+    // ========================================
+    loop() {
+        setInterval(() => this.tick(), 1000);
     }
 
+    // ========================================
+    // FORMAT
+    // ========================================
+    format(number) {
+        if (number < 1000)
+            return Math.floor(number);
 
+        if (number === Infinity || number > Number.MAX_VALUE)
+            return "∞";
+
+        let tier = Math.floor(Math.log10(number) / 3) - 1;
+        tier = Math.min(tier, suffixes.length - 1);
+
+        const scale = 10 ** ((tier + 1) * 3);
+        const value = number / scale;
+
+        return value.toFixed(2).replace(/\.00$/, "") + suffixes[tier];
+    }
 }
+
 
 // ============================
 // INSTANCIA
 // ============================
 const game = new Game();
-game.updateDisplay();
+const Bgs = 2
+
+document.body.style.backgroundImage = `url('src/imgs/bg${Math.floor(Math.random() * Bgs) + 1}.png')`;
 
 // ============================
-// EVENTOS CLICKER
+// EVENTOS Y ANIMACIONES
 // ============================
-clicker.addEventListener("click", () => {
-    game.click();
-});
-
+clicker.onclick = () => game.click();
 clicker.addEventListener("mouseleave", () => {
     clicker.style.transform = "scale(1)";
 });
@@ -281,3 +585,5 @@ clicker.addEventListener("mousedown", () => {
 clicker.addEventListener("mouseup", () => {
     clicker.style.transform = "scale(1)";
 });
+
+window.addEventListener("mouseup", () => this.stopFastPurchase());
