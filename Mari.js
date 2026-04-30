@@ -8,28 +8,35 @@ const MariDisplay = document.getElementById("maris-counter");
 const tooltip = document.getElementById("tooltip");
 const shop = document.getElementById("shop");
 const ownedBox = document.getElementById("owned-upgrades");
+const outfitsBox = document.getElementById("outfits");
 
 //Mari Imgs
 const Maris = 6;
 
 class ShopItem {
     constructor({
+        id,
         name,
         cost,
         value,
         image,
         bg,
         growth = 1.15,
+        requirementchild = null,
+        showRequirement = () => true,
         requirement = () => true,
-        requirementText = ""
+        requirementText = `Requires ${requirementchild ? requirementchild.name : "???"}`
     }) {
         Object.assign(this, {
+            id,
             name,
             cost,
             value,
             image,
             bg,
             growth,
+            showRequirement,
+            requirementchild,
             requirement,
             requirementText
         });
@@ -63,6 +70,10 @@ class ShopItem {
 
     visible(game) {
         return this.requirement(game);
+    }
+
+    canShow(game) {
+        return this.showRequirement(game);
     }
 
     getEffectText() {
@@ -116,7 +127,7 @@ class ClickMult extends Upgrade {
 
 class Interval extends Upgrade {
     onBuy(game) {
-        game.loopTime = Math.max(50, game.loopTime * this.value);
+        game.loopTime = game.loopTime * this.value;
         game.loop();
     }
 
@@ -125,12 +136,28 @@ class Interval extends Upgrade {
     }
 }
 
+class Tracksuit extends Interval {
+    onBuy(game) {
+        super.onBuy(game);
+
+        game.unlockOutfit("Tracksuit", "src/imgs/Mari/Tracksuit.png", "src/imgs/icons/Mari-track.png");
+    }
+}
+
+class Idol extends Interval {
+    onBuy(game) {
+        super.onBuy(game);
+
+        game.unlockOutfit("Idol", "src/imgs/Mari/Idol.png", "src/imgs/icons/Mari-idol.png");
+    }
+}
+
 // ============================
 // JUEGO
 // ============================
 class Game {
     constructor() {
-        this.maris = 2000;
+        this.maris = 20000;
         this.clicks = 0;
         this.loopTime = 1000;
 
@@ -157,62 +184,96 @@ class Game {
         this.fastInterval = null;
         this.fastTimeout = null;
         this.fastCard = null;
+
+        this.unlockedOutfits = [];
     }
 
     // ========================================
     // DATA
     // ========================================
     initData() {
-
+        //Students
         this.students.mari = new ClickPlus({
             name: "Mari",
+            id: "mari",
             cost: 10,
             value: 1,
-            image: "src/imgs/icons/Mari-icon.png",
-            bg: "src/imgs/bgs/trinity.png"
+            image: "src/imgs/icons/Mari.png",
+            bg: "src/imgs/bgs/trinity.png",
         });
 
+        //Buildings
         this.buildings.library = new GenPlus({
             name: "Library",
+            id: "library",
             cost: 50,
             value: 1,
-            image: "src/imgs/icons/Mari-icon.png",
-            bg: "src/imgs/bgs/trinity.png"
+            bg: "src/imgs/bgs/trinity.png",
         });
 
-        this.buildings.plaza = new GenMult({
+        this.buildings.plaza = new GenPlus({
             name: "Trinity Plaza",
-            cost: 300,
-            value: 2,
-            image: "src/imgs/icons/Mari-icon.png",
+            id: "plaza",
+            cost: 150,
+            value: 3,
             bg: "src/imgs/bgs/trinity.png",
             requirement: g => g.buildings.library.owned >= 1,
-            requirementText: "Requires Library"
+            requirementchild: this.buildings.library,
+            growth: 1.2
         });
 
-        this.upgrades.piety = new ClickPlus({
+        //Upgrades
+        this.upgrades.piety = new ClickMult({
             name: "Piety",
-            cost: 100,
-            value: 3,
+            id: "piety",
+            cost: 500,
+            value: 1.5,
             image: "src/imgs/objs/Piety.png",
-            bg: "src/imgs/bgs/trinity.png"
+            bg: "src/imgs/bgs/trinity.png",
+            requirement: g => g.students.mari.owned >= 1,
+            requirementchild: this.students.mari,
         });
 
         this.upgrades.corsage = new ClickMult({
-            name: "Corsage",
-            cost: 500,
-            value: 1.5,
+            name: "Innocent Corsage",
+            id: "corsage",
+            cost: 1000,
+            value: 2,
             image: "src/imgs/objs/Corsage.png",
-            bg: "src/imgs/bgs/trinity.png"
+            bg: "src/imgs/bgs/trinity.png",
+            requirement: g => g.activeUpgrades.some(u => u.id === "piety"),
+            requirementchild: this.upgrades.piety,
         });
 
-        this.upgrades.tracksuit = new Interval({
-            name: "Interval",
+        this.upgrades.tracksuit = new Tracksuit({
+            name: "Tracksuit",
+            id: "tracksuit",
             cost: 2000,
-            value: 0.5,
+            value: 0.2,
             image: "src/imgs/Mari/Tracksuit.png",
-            bg: "src/imgs/bgs/trinity.png"
+            bg: "src/imgs/bgs/trinity.png",
         });
+
+        this.upgrades.idol = new Idol({
+            name: "Idol Costume",
+            id: "idol",
+            cost: 5000,
+            value: 0.2,
+            image: "src/imgs/icons/idol-costume.png",
+            bg: "src/imgs/bgs/trinity.png",
+        });
+
+        for (let i = 0; i < 10; i++) {
+            this.upgrades[`idol${i}`] = new Interval({
+                name: "Idol Costume",
+                id: `idol${i}`,
+                cost: 5000,
+                value: 0.00000000000001,
+                image: "src/imgs/icons/idol-costume.png",
+                bg: "src/imgs/bgs/trinity.png",
+            });
+        }
+
     }
 
     // ========================================
@@ -236,7 +297,7 @@ class Game {
         for (const key in this.buildings)
             this.buildings[key].apply(data);
 
-        this.mariPerSecond = Math.floor(data.base * data.mult);
+        this.mariPerSecond = Math.floor((data.base * data.mult) * (1 / this.loopTime * 1000));
     }
 
     click() {
@@ -274,10 +335,19 @@ class Game {
     // ========================================
     update() {
         MariDisplay.innerHTML = `
-        Mari's: ${this.format(this.maris)}<br>
-        Mari/click: ${this.format(this.mariClick)}<br>
-        Mari/sec: ${this.format(this.mariPerSecond)}
-        `;
+        <div class="mc-main">${this.format(this.maris)}</div>
+
+        <div class="mc-sub">
+            <div>
+                <span>Per Click</span>
+                <strong>${this.format(this.mariClick)}</strong>
+            </div>
+            <div>
+                <span>Per Sec</span>
+                <strong>${this.format(this.mariPerSecond)}</strong>
+            </div>
+        </div>
+    `;
 
         this.updateShop();
     }
@@ -320,8 +390,34 @@ class Game {
         for (const key in source) {
             const item = source[key];
 
+            if (!item.canShow(this)) continue;
+
             if (!item.visible(this)) {
-                shop.appendChild(this.lockedCard(item));
+                const card = this.createCard(item, () => { });
+                card.classList.add("locked");
+
+                const overlay = document.createElement("div");
+                overlay.className = "locked-overlay";
+
+                const showRealRequirement = (() => {
+                    // Si depende de otro item
+                    if (item.requirementchild) {
+                        return item.requirementchild.unlocked;
+                    }
+
+                    // Si no tiene dependencia explícita, se puede mostrar
+                    return true;
+                })();
+
+                overlay.innerHTML = `
+                    <div class="locked-text">
+                        🔒<br>
+                        ${showRealRequirement ? item.requirementText : "???"}
+                    </div>
+                `;
+
+                card.appendChild(overlay);
+                shop.appendChild(card);
                 continue;
             }
 
@@ -382,11 +478,13 @@ class Game {
 
         if (!hasIcon) card.classList.add("no-icon");
 
+        const isLocked = !item.unlocked;
+
         card.innerHTML = `
         ${hasIcon ? `<img src="${item.image}" class="upgrade-icon">` : ""}
-        <div class="upgrade-name">${item.name}</div>
-        <div class="upgrade-cost">${item.cost}$</div>
-        <div class="upgrade-owned">x${item.owned}</div>
+        <div class="upgrade-name">${isLocked ? "???" : item.name}</div>
+        <div class="upgrade-cost">${isLocked ? "???" : item.cost + "$"}</div>
+        <div class="upgrade-owned">${isLocked ? "" : "x" + item.owned}</div>
         `;
         // BUY FUNCTION
         card.addEventListener("mousedown", (e) => {
@@ -475,6 +573,8 @@ class Game {
     }
 
     checkRequirement() {
+        let changed = false;
+
         const sources = [
             this.students,
             this.buildings,
@@ -487,11 +587,34 @@ class Game {
 
                 if (item.visible(this) && !item.unlocked) {
                     item.unlocked = true;
-                    this.renderShop();
-                    this.update();
-                    return;
+                    changed = true;
                 }
             }
+        }
+
+        if (changed) {
+            this.renderShop();
+            this.update();
+        }
+    }
+    unlockOutfit(name, image, icon) {
+        this.unlockedOutfits.push({ name, image, icon });
+        this.renderOutfits();
+    }
+    renderOutfits() {
+        outfitsBox.innerHTML = "";
+
+        for (const skin of this.unlockedOutfits) {
+            const img = document.createElement("img");
+
+            img.src = skin.icon;
+            img.title = skin.name;
+
+            img.onclick = () => {
+                clicker.src = skin.image;
+            };
+
+            outfitsBox.appendChild(img);
         }
     }
     // ========================================
@@ -591,10 +714,11 @@ class Game {
 // INSTANCIA
 // ============================
 const game = new Game();
-const Bgs = 2
+const Bgs = 6
 
 document.body.style.backgroundImage = `url('src/imgs/bgs/bg${Math.floor(Math.random() * Bgs) + 1}.png')`;
 
+game.unlockOutfit("Nun", "src/imgs/Mari/Nun.png", "src/imgs/icons/Mari.png");
 // ============================
 // EVENTOS Y ANIMACIONES
 // ============================

@@ -18,17 +18,97 @@ header {
     display: flex;
     width: 100%;
     min-height: 100vh;
-    background-color: #fcdaa4ad;
+    border-radius: 12px;
 }
 
 /* IZQUIERDA - UID 20% */
 #UID {
     width: 20%;
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    border: 2px solid #F8BF94;
+    flex-direction: column;
+    gap: 5px;
+    align-items: stretch;
     padding: 20px;
+    border-radius: 12px;
+    border: 2px solid #F8BF94;
+    background-color: #fcdaa4ad;
+}
+
+#maris-counter {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.15));
+    border: 2px solid #F8BF94;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    backdrop-filter: blur(4px);
+    box-shadow:
+        inset 0 0 10px rgba(255, 255, 255, 0.2),
+        0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Número principal */
+.mc-main {
+    font-size: 32px;
+    font-weight: bold;
+    color: #5a3e2b;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    margin-bottom: 10px;
+}
+
+/* Contenedor inferior */
+.mc-sub {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+/* Cada stat */
+.mc-sub div {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    padding: 6px;
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Label */
+.mc-sub span {
+    opacity: 0.7;
+}
+
+/* Valor */
+.mc-sub strong {
+    font-size: 15px;
+    color: #3d2a1d;
+}
+
+#outfit-box {
+    background: rgba(255, 255, 255, .25);
+    border: 2px solid #F8BF94;
+    border-radius: 10px;
+    padding: 12px;
+}
+
+#outfits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+#outfits img {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    cursor: pointer;
+    object-fit: cover;
+    border: 2px solid #d69e74;
+    transition: 0.15s;
+}
+
+#outfits img:hover {
+    transform: scale(1.08);
 }
 
 /* CENTRO - MARI 50% */
@@ -38,6 +118,8 @@ header {
     justify-content: center;
     border: 2px solid #F8BF94;
     align-items: top;
+    border-radius: 12px;
+    background-color: #fcdaa4ad;
 }
 
 /* DERECHA - MEJORAS */
@@ -48,6 +130,43 @@ header {
     gap: 15px;
     padding: 20px;
     border: 2px solid #F8BF94;
+    height: 100vh;
+    overflow: hidden;
+    border-radius: 12px;
+    background-color: #fcdaa4ad;
+}
+
+#shop {
+    height: 100%;
+    overflow-y: auto;
+    padding: 10px 8px 10px 12px;
+
+    gap: 10px;
+
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #d69e74 transparent;
+    gap: 10px;
+}
+
+/* Chrome / Edge / Opera */
+#shop::-webkit-scrollbar {
+    width: 10px;
+}
+
+#shop::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#shop::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #f8bf94, #d69e74);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+#shop::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #ffcfa8, #c78f66);
 }
 
 /* IMAGEN */
@@ -64,7 +183,6 @@ header {
     background: #ABE7EE;
     border: 2px solid #77aeb5;
     cursor: pointer;
-    overflow: hidden;
     transition: 0.15s;
     user-select: none;
     -webkit-user-drag: none;
@@ -81,6 +199,7 @@ header {
     cursor: pointer;
     display: grid;
     grid-template-columns: auto 1fr auto;
+    overflow: visible;
 }
 
 .upgrade-card.no-icon .upgrade-name {
@@ -122,6 +241,16 @@ header {
     bottom: 8px;
     font-size: 16px;
     font-weight: bold;
+}
+
+.upgrade-card.locked {
+    filter: grayscale(1);
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.upgrade-card.locked .upgrade-icon {
+    filter: blur(4px) brightness(0.7);
 }
 
 .RanMari {
@@ -174,6 +303,40 @@ h2 {
     overflow: hidden;
 }
 
+.locked-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    pointer-events: none;
+    animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0.8;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.locked-text {
+    text-align: center;
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    line-height: 1.3;
+}
+
 .locked-card::before {
     content: "🔒";
     position: absolute;
@@ -201,7 +364,7 @@ h2 {
     flex-wrap: wrap;
     gap: 10px;
     padding: 12px;
-    min-height: 80px;
+    min-height: 91px;
     background: rgba(255, 255, 255, 0.28);
     border: 2px solid #F8BF94;
     border-radius: 10px;
