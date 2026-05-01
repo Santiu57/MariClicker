@@ -8,11 +8,6 @@ body {
     background-position: center;
 }
 
-header {
-    text-align: center;
-    margin-bottom: 5px;
-}
-
 /* CONTENEDOR GENERAL */
 #layout {
     display: flex;

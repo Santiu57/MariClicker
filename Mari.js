@@ -1,6 +1,6 @@
 
 //IMPORTS
-import { suffixes } from "./suffixes.js";
+import { suffixes } from "./src/js/utils/suffixes.js";
 
 // ELEMENTOS DEL DOM
 const clicker = document.getElementById("mari-image");
@@ -263,7 +263,25 @@ class Game {
             bg: "src/imgs/bgs/trinity.png",
         });
 
-        for (let i = 0; i < 10; i++) {
+        this.upgrades[`idol0`] = new Interval({
+            name: "Idol Costume",
+            id: `idol0`,
+            cost: 5000,
+            value: 0.00000000000001,
+            image: "src/imgs/icons/idol-costume.png",
+            bg: "src/imgs/bgs/trinity.png",
+        });
+
+        this.upgrades[`idol1`] = new Interval({
+            name: "Idol Costume",
+            id: `idol1`,
+            cost: 5000,
+            value: 0.00000000000001,
+            image: "src/imgs/icons/idol-costume.png",
+            bg: "src/imgs/bgs/trinity.png",
+        });
+
+        for (let i = 2; i < 30; i++) {
             this.upgrades[`idol${i}`] = new Interval({
                 name: "Idol Costume",
                 id: `idol${i}`,
@@ -271,9 +289,11 @@ class Game {
                 value: 0.00000000000001,
                 image: "src/imgs/icons/idol-costume.png",
                 bg: "src/imgs/bgs/trinity.png",
+                requirement: g => g.activeUpgrades.some(u => u.id === `idol${i - 1}`),
+                requirementchild: this.upgrades[`idol${i - 1}`],
+                showRequirement: g => g.activeUpgrades.some(u => u.id === `idol${i - 2}`),
             });
         }
-
     }
 
     // ========================================
@@ -427,9 +447,12 @@ class Game {
                     if (item.purchased) return;
 
                     if (item.buy(this)) {
+                        tooltip.style.opacity = 0;
+
                         item.purchased = true;
                         this.activeUpgrades.push(item);
                         delete source[key];
+
                         this.calcClick();
                         this.calcGen();
 
