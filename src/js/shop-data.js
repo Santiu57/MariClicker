@@ -97,18 +97,7 @@ function createUpgrades(students) {
             image: SHOP_ASSETS.idolCostume,
             bg: SHOP_ASSETS.trinityBg,
         }),
-        idol0: createIdolChainUpgrade(ITEM_CONFIG.IDOL_CHAIN_FIRST_INDEX),
-        idol1: createIdolChainUpgrade(ITEM_CONFIG.IDOL_CHAIN_SECOND_INDEX),
     };
-
-    for (
-        let index = ITEM_CONFIG.IDOL_CHAIN_FIRST_DEPENDENT_INDEX;
-        index < ITEM_CONFIG.IDOL_CHAIN_LIMIT;
-        index++
-    ) {
-        upgrades[`idol${index}`] = createIdolChainUpgrade(index);
-    }
-
     return upgrades;
 }
 
@@ -122,32 +111,4 @@ function wireUpgradeRequirements(upgrades, students) {
 
     upgrades.corsage.requirement = game => game.activeUpgrades.some(upgrade => upgrade.id === "piety");
     upgrades.corsage.requirementchild = upgrades.piety;
-
-    for (
-        let index = ITEM_CONFIG.IDOL_CHAIN_FIRST_DEPENDENT_INDEX;
-        index < ITEM_CONFIG.IDOL_CHAIN_LIMIT;
-        index++
-    ) {
-        upgrades[`idol${index}`].requirement =
-            game => game.activeUpgrades.some(
-                upgrade => upgrade.id === `idol${index - ITEM_CONFIG.IDOL_CHAIN_PREVIOUS_OFFSET}`
-            );
-        upgrades[`idol${index}`].requirementchild =
-            upgrades[`idol${index - ITEM_CONFIG.IDOL_CHAIN_PREVIOUS_OFFSET}`];
-        upgrades[`idol${index}`].showRequirement =
-            game => game.activeUpgrades.some(
-                upgrade => upgrade.id === `idol${index - ITEM_CONFIG.IDOL_CHAIN_VISIBLE_AFTER_OFFSET}`
-            );
-    }
-}
-
-function createIdolChainUpgrade(index) {
-    return new Interval({
-        name: "Idol Costume",
-        id: `idol${index}`,
-        cost: SHOP_BALANCE.IDOL_CHAIN.COST,
-        value: ITEM_CONFIG.IDOL_CHAIN_INTERVAL_MULTIPLIER,
-        image: SHOP_ASSETS.idolCostume,
-        bg: SHOP_ASSETS.trinityBg,
-    });
 }
