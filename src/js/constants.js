@@ -1,5 +1,5 @@
 export const GAME_CONFIG = {
-    INITIAL_MARIS: 20000,
+    INITIAL_MARIS: 0,
     INITIAL_CLICKS: 0,
     INITIAL_LOOP_TIME_MS: 1000,
     BASE_CLICK_VALUE: 1,
@@ -11,16 +11,40 @@ export const GAME_CONFIG = {
 export const ITEM_CONFIG = {
     INITIAL_OWNED: 0,
     SPEED_MULTIPLIER_NUMERATOR: 1,
-    DEFAULT_GROWTH: 1.15,
-    PLAZA_GROWTH: 1.2,
+    DEFAULT_GROWTH: 1.5,
     REQUIRED_OWNED_COUNT: 1,
 };
 
 export const SHOP_BALANCE = {
+    // Students
     MARI: {
         COST: 10,
         VALUE: 1,
     },
+    HINATA: {
+        COST: 50,
+        VALUE: 3,
+    },
+    SAKURAKO: {
+        COST: 200,
+        VALUE: 8,
+    },
+    SERINA: {
+        COST: 500,
+        VALUE: 0.2,
+        GROWTH: 1.8,
+    },
+    HANAE: {
+        COST: 800,
+        VALUE: 0.2,
+        GROWTH: 1.9,
+    },
+    MINE: {
+        COST: 1200,
+        VALUE: 0.2,
+        GROWTH: 1.95,
+    },
+    // Buildings
     LIBRARY: {
         COST: 50,
         VALUE: 1,
@@ -29,6 +53,7 @@ export const SHOP_BALANCE = {
         COST: 150,
         VALUE: 3,
     },
+    // Upgrades
     PIETY: {
         COST: 500,
         VALUE: 1.5,
@@ -39,11 +64,11 @@ export const SHOP_BALANCE = {
     },
     TRACKSUIT: {
         COST: 2000,
-        VALUE: 0.2,
+        VALUE: 0.5,
     },
     IDOL: {
         COST: 5000,
-        VALUE: 0.2,
+        VALUE: 3,
     },
 };
 
@@ -106,7 +131,7 @@ export const PATHS = {
     MARI: "src/imgs/Mari",
     ICONS: "src/imgs/icons",
     OBJECTS: "src/imgs/objs",
-    TRINITY_BG: "src/imgs/bgs/trinity.png",
+    TRINITY_BG: "src/imgs/bgs/",
 };
 
 export const INITIAL_OUTFIT = {

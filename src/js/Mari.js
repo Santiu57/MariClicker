@@ -257,7 +257,7 @@ class Game {
         overlay.innerHTML = `
             <div class="locked-text">
                 🔒<br>
-                ${showRealRequirement ? item.requirementText : "???"}
+                ${showRealRequirement ? item.getRequirementText() : "???"}
             </div>
         `;
 
@@ -270,9 +270,15 @@ class Game {
         const card = document.createElement("div");
         const hasIcon = !(item instanceof Building);
         const isLocked = !item.unlocked;
+        const bgImage = item.bg?.image ?? item.bg;
+        const labelBackground = item.bg?.background ?? "#efbf9bb8";
+        const labelBorder = item.bg?.border ?? "2px solid #F8BF94";
 
         card.className = "upgrade-card";
-        card.style.backgroundImage = `url(${item.bg})`;
+        card.style.backgroundImage = `url(${bgImage})`;
+        card.style.setProperty("--upgrade-label-bg", labelBackground);
+        card.style.setProperty("--upgrade-label-border", labelBorder);
+        card.style.border = labelBorder;
 
         if (!hasIcon) {
             card.classList.add("no-icon");
@@ -485,6 +491,11 @@ function setRandomBackground() {
 }
 
 function bindClickerEvents(game) {
+    clicker.draggable = false;
+    clicker.addEventListener("dragstart", (event) => {
+        event.preventDefault();
+    });
+
     clicker.onclick = () => game.click();
 
     clicker.addEventListener("mouseleave", () => {

@@ -169,14 +169,16 @@ body {
     width: auto;
     height: 800px;
     transition: transform 0.2s ease;
+    user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
 }
 
 /* Mejoras */
 .upgrade-card {
     position: relative;
     height: 80px;
-    background: #ABE7EE;
-    border: 2px solid #77aeb5;
+    border: 2px solid #F8BF94;
     cursor: pointer;
     transition: 0.15s;
     user-select: none;
@@ -221,6 +223,9 @@ body {
     top: 10px;
     font-size: 20px;
     font-weight: bold;
+    background: var(--upgrade-label-bg, #efbf9bb8);
+    border: var(--upgrade-label-border, 2px solid #F8BF94);
+    border-radius: 8px;
 }
 
 .upgrade-cost {
@@ -228,6 +233,9 @@ body {
     right: 10px;
     top: 8px;
     font-size: 16px;
+    background: var(--upgrade-label-bg, #efbf9bb8);
+    border: var(--upgrade-label-border, 2px solid #F8BF94);
+    border-radius: 8px;
 }
 
 .upgrade-owned {
@@ -236,6 +244,9 @@ body {
     bottom: 8px;
     font-size: 16px;
     font-weight: bold;
+    background: var(--upgrade-label-bg, #efbf9bb8);
+    border: var(--upgrade-label-border, 2px solid #F8BF94);
+    border-radius: 8px;
 }
 
 .upgrade-card.locked {
